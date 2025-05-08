@@ -6,7 +6,7 @@ exports.handler = async (event, context) => {
   const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL_ZENDESK;
 
   // 보낼 메시지 구성
-  const message = {};
+  const message = { text: '' };
   if (event.body.event_no == 90027) {
     let info_msg = event.body.extra_info.map(
       (info) => `    - ${info.ord_item_code} (${info.supplier_code}) \n`
@@ -36,6 +36,7 @@ exports.handler = async (event, context) => {
 
   try {
     // Slack에 POST 요청
+    console.log(message);
     await axios.post(slackWebhookUrl, message);
 
     return {
