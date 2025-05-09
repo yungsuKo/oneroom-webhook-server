@@ -9,29 +9,29 @@ exports.handler = async (event, context) => {
   // 보낼 메시지 구성
   let message = { text: 'test' };
   if (body.event_no == 90027) {
-    let info_msg = body.extra_info.map(
+    let info_msg = body.resource.extra_info.map(
       (info) => `    - ${info.ord_item_code} (${info.supplier_code}) \n`
     );
     message.text = `반품이 신청 되었어요.\n
     \n
-    - 주문번호 : ${body.order_id} \n
-    - 주문일자 : ${body.payment_date.slice(0, 10)} \n
+    - 주문번호 : ${body.resource.order_id} \n
+    - 주문일자 : ${body.resource.payment_date.slice(0, 10)} \n
     - 반품 품목
     ${info_msg}
-    - 반품사유 : ${body.claim_reason} \n
+    - 반품사유 : ${body.resource.claim_reason} \n
     
     `;
-  } else if (body.event_no == 90028) {
-    let info_msg = body.extra_info.map(
+  } else if (body.resource.event_no == 90028) {
+    let info_msg = body.resource.extra_info.map(
       (info) => `    - ${info.ord_item_code} (${info.supplier_code}) \n`
     );
     message.text = `교환이 신청 되었어요.\n
     \n
-    - 주문번호 : ${body.order_id} \n
-    - 주문일자 : ${body.payment_date.slice(0, 10)} \n
+    - 주문번호 : ${body.resource.order_id} \n
+    - 주문일자 : ${body.resource.payment_date.slice(0, 10)} \n
     - 교환 품목
     ${info_msg}
-    - 교환사유 : ${body.claim_reason} \n
+    - 교환사유 : ${body.resource.claim_reason} \n
     `;
   }
 
