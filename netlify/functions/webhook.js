@@ -33,6 +33,8 @@ exports.handler = async (event, context) => {
     ${info_msg}
     - 교환사유 : ${body.resource.claim_reason} \n
     `;
+  } else {
+    return;
   }
 
   try {
