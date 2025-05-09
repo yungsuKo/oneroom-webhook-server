@@ -6,7 +6,7 @@ exports.handler = async (event, context) => {
   const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL_ZENDESK;
 
   // 보낼 메시지 구성
-  const message = { text: '' };
+  let message = { text: 'test' };
   if (event.body.event_no == 90027) {
     let info_msg = event.body.extra_info.map(
       (info) => `    - ${info.ord_item_code} (${info.supplier_code}) \n`
