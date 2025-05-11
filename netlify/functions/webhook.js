@@ -26,7 +26,7 @@ exports.handler = async (event, context) => {
 *품목별 주문번호*  
 ${info_msg}
 *주문자명(수령자명)* : ${body.resource.buyer_name}
-*연락처* : ${body.resource.buyer_phone}
+*연락처* : ${body.resource.buyer_cellphone}
 *상품명* : ${body.resource.ordering_product_name}
 *반품사유*: ${body.resource.claim_reason}
 *주문서URL*: https://oneroommake.cafe24.com/admin/php/shop1/s_new/order_detail.php?order_id=${
@@ -44,7 +44,7 @@ ${info_msg}
 *품목별 주문번호(공급사코드)*  
 ${info_msg}
 *주문자명(수령자명)* : ${body.resource.buyer_name}
-*연락처* : ${body.resource.buyer_phone}
+*연락처* : ${body.resource.buyer_cellphone}
 *상품명* : ${body.resource.ordering_product_name}
 *교환사유*: ${body.resource.claim_reason}
 *주문서URL*: https://oneroommake.cafe24.com/admin/php/shop1/s_new/order_detail.php?order_id=${
