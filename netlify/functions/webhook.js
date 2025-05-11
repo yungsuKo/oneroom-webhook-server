@@ -5,34 +5,52 @@ exports.handler = async (event, context) => {
 
   const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL_ZENDESK;
   const body = JSON.parse(event.body);
+  const today = new Date();
+  const formattedDate =
+    today.getFullYear() +
+    '-' +
+    String(today.getMonth() + 1).padStart(2, '0') +
+    '-' +
+    String(today.getDate()).padStart(2, '0');
 
   // 보낼 메시지 구성
-  let message = { text: 'test' };
+  let message = { text: 'test', mrkdwn: true };
   if (body.event_no == 90027) {
-    let info_msg = body.resource.extra_info.map(
-      (info) => `    - ${info.ord_item_code} (${info.supplier_code}) \n`
-    );
-    message.text = `반품이 신청 되었어요.\n
-    \n
-    - 주문번호 : ${body.resource.order_id} \n
-    - 주문일자 : ${body.resource.payment_date.slice(0, 10)} \n
-    - 반품 품목
-    ${info_msg}
-    - 반품사유 : ${body.resource.claim_reason} \n
-    
-    `;
+    const info_msg = body.resource.extra_info
+      .map((info) => `\t- ${info.ord_item_code} (${info.supplier_code})`)
+      .join('\n');
+    message.text = `*반품이 신청 되었어요!*
+
+*요청날짜*: ${formattedDate}  
+*주문일자*: ${body.resource.payment_date.slice(0, 10)}  
+*품목별 주문번호*  
+${info_msg}
+*주문자명(수령자명)* : ${body.resource.buyer_name}
+*연락처* : ${body.resource.buyer_phone}
+*상품명* : ${body.resource.ordering_product_name}
+*반품사유*: ${body.resource.claim_reason}
+*주문서URL*: https://oneroommake.cafe24.com/admin/php/shop1/s_new/order_detail.php?order_id=${
+      body.resource.order_id
+    }&menu_no=78&bIsPinpointSearch=undefined
+`;
   } else if (body.resource.event_no == 90028) {
-    let info_msg = body.resource.extra_info.map(
-      (info) => `    - ${info.ord_item_code} (${info.supplier_code}) \n`
-    );
-    message.text = `교환이 신청 되었어요.\n
-    \n
-    - 주문번호 : ${body.resource.order_id} \n
-    - 주문일자 : ${body.resource.payment_date.slice(0, 10)} \n
-    - 교환 품목
-    ${info_msg}
-    - 교환사유 : ${body.resource.claim_reason} \n
-    `;
+    const info_msg = body.resource.extra_info
+      .map((info) => `\t- ${info.ord_item_code} (${info.supplier_code})`)
+      .join('\n');
+    message.text = `*교환이 신청 되었어요!*
+
+*요청날짜*: ${formattedDate}  
+*주문일자*: ${body.resource.payment_date.slice(0, 10)}  
+*품목별 주문번호(공급사코드)*  
+${info_msg}
+*주문자명(수령자명)* : ${body.resource.buyer_name}
+*연락처* : ${body.resource.buyer_phone}
+*상품명* : ${body.resource.ordering_product_name}
+*교환사유*: ${body.resource.claim_reason}
+*주문서URL*: https://oneroommake.cafe24.com/admin/php/shop1/s_new/order_detail.php?order_id=${
+      body.resource.order_id
+    }&menu_no=78&bIsPinpointSearch=undefined
+`;
   } else {
     return;
   }
