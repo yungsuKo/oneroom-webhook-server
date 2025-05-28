@@ -86,9 +86,9 @@ ${info_msg}
     const zendeskPayload = {
       ticket: {
         subject: `요청 - ${body.resource.order_id}`,
-        comment: { body: message },
+        comment: { body: message.text },
         requester: {
-          name: 'CS/이자영',
+          name: '이자영',
           email: 'jenny@floc.kr',
         },
         custom_fields: [
