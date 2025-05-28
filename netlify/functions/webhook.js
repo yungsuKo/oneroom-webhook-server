@@ -24,6 +24,7 @@ exports.handler = async (event, context) => {
   const reason = body.resource.claim_reason || '누락';
   const orderUrl = `https://oneroommake.cafe24.com/admin/php/shop1/s_new/order_detail.php?order_id=${body.resource.order_id}&menu_no=78&bIsPinpointSearch=undefined`;
   let registCate = '';
+  let info_msg = '';
 
   // 고유한 요청 ID 생성
   const keyBase = `${body.resource.order_id}-${body.event_no}`;
@@ -42,7 +43,7 @@ exports.handler = async (event, context) => {
   let message = { text: 'test', mrkdwn: true };
   if (body.event_no == 90027) {
     registCate = '반품_변심';
-    const info_msg = body.resource.extra_info
+    info_msg = body.resource.extra_info
       .map((info) => `\t- ${info.ord_item_code} (${info.supplier_code})`)
       .join('\n');
     message.text = `*반품이 신청 되었어요!*
@@ -59,7 +60,7 @@ ${info_msg}
 `;
   } else if (body.resource.event_no == 90028) {
     registCate = '교환_불량';
-    const info_msg = body.resource.extra_info
+    info_msg = body.resource.extra_info
       .map((info) => `\t- ${info.ord_item_code} (${info.supplier_code})`)
       .join('\n');
     message.text = `*교환이 신청 되었어요!*
@@ -97,7 +98,7 @@ ${info_msg}
           { id: 9316416018063, value: orderUrl }, // 주문서URL
           { id: 9316388042767, value: info_msg }, // 품목별 주문번호
           { id: 9316414895503, value: requesterCellphone }, //
-          { id: 9316400270479, value: 'registCate' }, // CS접수유형
+          { id: 9316400270479, value: registCate }, // CS접수유형
         ],
       },
     };
