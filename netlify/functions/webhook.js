@@ -84,7 +84,7 @@ ${info_msg}
 
     const zendeskPayload = {
       ticket: {
-        subject: `[${typeText}] 요청 - ${body.resource.order_id}`,
+        subject: `요청 - ${body.resource.order_id}`,
         comment: { body: slackMessageText },
         requester: {
           name: 'CS/이자영',
