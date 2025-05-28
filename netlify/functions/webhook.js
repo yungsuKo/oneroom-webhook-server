@@ -126,7 +126,7 @@ ${info_msg}
     return {
       statusCode: 200,
       body: JSON.stringify({
-        message: 'Slack notification sent!',
+        message: 'Zendesk created, Slack notification sent!',
       }),
     };
   } catch (error) {
