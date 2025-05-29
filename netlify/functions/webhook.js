@@ -39,15 +39,20 @@ exports.handler = async (event, context) => {
   }
 
   // 보낼 메시지 구성
-  if (body.event_no !== 90027 && body.event_no !== 90028) {
+  if (
+    body.event_code !== 'return_order_request' &&
+    body.event_code !== 'exchange_order_request'
+  ) {
     return {
       statusCode: 400,
       body: 'Unhandled event type',
     };
   }
 
-  const eventText = body.event_no === 90027 ? '반품' : '교환';
-  const registCate = body.event_no === 90027 ? '반품_변심' : '교환_불량';
+  const eventText =
+    body.event_code === 'return_order_request' ? '반품' : '교환';
+  const registCate =
+    body.event_code === 'return_order_request' ? '반품_변심' : '교환_불량';
 
   const slackMessage = {
     text: `*${eventText}이 신청 되었어요!*
@@ -106,6 +111,7 @@ exports.handler = async (event, context) => {
           { id: 9316388042767, value: `${info.ord_item_code}` }, // 품목
           { id: 9316414895503, value: requesterCellphone },
           { id: 9316400270479, value: registCate }, // 반품/교환 유형
+          { id: 9316386931215, value: productName }, // 상품명
         ],
       },
     };
