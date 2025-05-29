@@ -63,7 +63,7 @@ exports.handler = async (event, context) => {
   *상품명* : ${productName}
   *${eventText}사유*: ${reason}
   *주문서URL*: ${orderUrl}
-  *raw_data* : ${body}
+  *raw_data* : ${JSON.stringify(body)}
   `,
     mrkdwn: true,
   };
