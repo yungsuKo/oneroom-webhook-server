@@ -21,12 +21,12 @@ exports.handler = async (event, context) => {
   const requesterCellphone = body.resource.buyer_cellphone || '01000000000';
   const payDate = body.resource.payment_date.slice(0, 10);
   const productName = body.resource.ordering_product_name || '누락';
-  const reason = body.resource.claim_reason || '누락';
+  const reason = body.resource.claim_reason || '미기재';
   const orderUrl = `https://oneroommake.cafe24.com/admin/php/shop1/s_new/order_detail.php?order_id=${body.resource.order_id}&menu_no=78&bIsPinpointSearch=undefined`;
   let info_msg = '';
 
   // 고유한 요청 ID 생성
-  const keyBase = `${body.resource.order_id}-${body.event_no}`;
+  const keyBase = `${body.resource.order_id}-${body.resource.event_code}`;
   const uniqueKey = crypto.createHash('md5').update(keyBase).digest('hex');
 
   // 중복 체크
@@ -40,8 +40,8 @@ exports.handler = async (event, context) => {
 
   // 보낼 메시지 구성
   if (
-    body.event_code !== 'return_order_request' &&
-    body.event_code !== 'exchange_order_request'
+    body.resource.event_code !== 'return_order_request' &&
+    body.resource.event_code !== 'exchange_order_request'
   ) {
     return {
       statusCode: 400,
@@ -50,9 +50,11 @@ exports.handler = async (event, context) => {
   }
 
   const eventText =
-    body.event_code === 'return_order_request' ? '반품' : '교환';
+    body.resource.event_code === 'return_order_request' ? '반품' : '교환';
   const registCate =
-    body.event_code === 'return_order_request' ? '반품_변심' : '교환_불량';
+    body.resource.event_code === 'return_order_request'
+      ? '반품_변심'
+      : '교환_불량';
 
   const slackMessage = {
     text: `*${eventText}이 신청 되었어요!*
