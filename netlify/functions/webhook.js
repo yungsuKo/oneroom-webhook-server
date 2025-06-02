@@ -40,8 +40,8 @@ exports.handler = async (event, context) => {
 
   // 보낼 메시지 구성
   if (
-    body.resource.event_code !== 'return_order_request' &&
-    body.resource.event_code !== 'exchange_order_request'
+    body.resource.event_code !== 'return_order_process' &&
+    body.resource.event_code !== 'exchange_order_process'
   ) {
     return {
       statusCode: 400,
@@ -50,9 +50,9 @@ exports.handler = async (event, context) => {
   }
 
   const eventText =
-    body.resource.event_code === 'return_order_request' ? '반품' : '교환';
+    body.resource.event_code === 'return_order_process' ? '반품' : '교환';
   const registCate =
-    body.resource.event_code === 'return_order_request'
+    body.resource.event_code === 'return_order_process'
       ? '반품_변심'
       : '교환_불량';
 
