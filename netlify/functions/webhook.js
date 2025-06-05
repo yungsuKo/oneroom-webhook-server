@@ -99,7 +99,7 @@ exports.handler = async (event, context) => {
 
     const zendeskPayload = {
       ticket: {
-        subject: `[${eventText}] ${info.ord_item_code} - ${body.resource.order_id}`,
+        subject: `[${eventText}] 신규 티켓! 접수 내용 확인 필요`,
         comment: { body: itemMessage },
         requester: {
           name: '이자영',
