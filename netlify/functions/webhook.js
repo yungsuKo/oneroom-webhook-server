@@ -96,12 +96,18 @@ exports.handler = async (event, context) => {
     });
 
     for (const info of body.resource.extra_info) {
-      const itemKey = `${body.resource.order_id}-${info.ord_item_code}-${body.event_no}`;
+      const isDuplicate = await isTicketAlreadyExists({
+        zendeskDomain,
+        zendeskEmail,
+        zendeskToken,
+        ordItemCode: info.ord_item_code,
+      });
 
-      if (getCache(itemKey)) {
-        console.log(`중복된 품목 요청: ${itemKey}`);
+      if (isDuplicate) {
+        console.log(`❗ 중복 티켓 존재 - 생성 건너뜀: ${info.ord_item_code}`);
         continue;
       }
+
       const supplierName =
         supplierMap[info.supplier_code] || info.supplier_code;
 
@@ -163,8 +169,6 @@ exports.handler = async (event, context) => {
             }
           )
         );
-
-        setCache(itemKey);
       } catch (err) {
         console.error(
           `❌ Zendesk 생성 실패 (${info.ord_item_code}):`,
@@ -290,5 +294,35 @@ async function fetchAllUsers({ zendeskDomain, zendeskEmail, zendeskToken }) {
       error.response?.data || error.message
     );
     return [];
+  }
+}
+
+async function isTicketAlreadyExists({
+  zendeskDomain,
+  zendeskEmail,
+  zendeskToken,
+  ordItemCode,
+}) {
+  const query = `type:ticket custom_field_9316388042767:${ordItemCode}`;
+  const url = `https://${zendeskDomain}/api/v2/search.json?query=${encodeURIComponent(
+    query
+  )}`;
+
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        Authorization:
+          'Basic ' +
+          Buffer.from(`${zendeskEmail}/token:${zendeskToken}`).toString(
+            'base64'
+          ),
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data.count > 0; // 하나라도 있으면 true 반환
+  } catch (err) {
+    console.error('❌ Zendesk Search API Error:', err.message);
+    return false; // 실패 시 티켓 생성 허용 (fail-safe)
   }
 }
