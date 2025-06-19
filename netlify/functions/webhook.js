@@ -95,6 +95,12 @@ exports.handler = async (event, context) => {
       zendeskToken,
     });
 
+    const productNames = (productName || '')
+      .split(',')
+      .map((name) => name.trim());
+
+    let index = 0;
+
     for (const info of body.resource.extra_info) {
       const isDuplicate = await isTicketAlreadyExists({
         zendeskDomain,
@@ -102,11 +108,12 @@ exports.handler = async (event, context) => {
         zendeskToken,
         ordItemCode: info.ord_item_code,
       });
-
       if (isDuplicate) {
         console.log(`❗ 중복 티켓 존재 - 생성 건너뜀: ${info.ord_item_code}`);
         continue;
       }
+
+      const productNameForItem = productNames[index++] || '누락';
 
       const supplierName =
         supplierMap[info.supplier_code] || info.supplier_code;
@@ -118,7 +125,7 @@ exports.handler = async (event, context) => {
   *연락처*: ${requesterCellphone}
   *품목 주문번호*: ${info.ord_item_code}
   *공급사명*: ${supplierName}
-  *상품명*: ${productName}
+  *상품명*: ${productNameForItem}
   *사유*: ${reason}
   *주문서URL*: ${orderUrl}
   `;
@@ -147,7 +154,7 @@ exports.handler = async (event, context) => {
             { id: 9316388042767, value: `${info.ord_item_code}` }, // 품목
             { id: 9316414895503, value: requesterCellphone },
             { id: 9316400270479, value: registCate }, // 반품/교환 유형
-            { id: 9316386931215, value: productName }, // 상품명
+            { id: 9316386931215, value: productNameForItem }, // 상품명
           ],
         },
       };
