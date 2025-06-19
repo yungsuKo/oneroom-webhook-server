@@ -49,7 +49,7 @@ exports.handler = async (event, context) => {
     // 보낼 메시지 구성
     if (
       body.resource.event_code !== 'return_order_process' &&
-      body.resource.event_code !== 'exchange_order_process'
+      !body.resource.event_code.includes('exchange_order')
     ) {
       return {
         statusCode: 400,
