@@ -82,6 +82,12 @@ exports.handler = async (event, context) => {
     };
 
     await axios.post(slackWebhookUrl, slackMessage);
+    // fetchAllUsers 호출 (최초 한 번만 불러오도록 바깥에서 호출한 뒤 users 배열로 전달하는 게 이상적입니다)
+    const allUsers = await fetchAllUsers({
+      zendeskDomain,
+      zendeskEmail,
+      zendeskToken,
+    });
 
     for (const info of body.resource.extra_info) {
       const itemKey = `${body.resource.order_id}-${info.ord_item_code}-${body.event_no}`;
@@ -105,14 +111,22 @@ exports.handler = async (event, context) => {
   *주문서URL*: ${orderUrl}
   `;
 
+      // 공급사명과 같은 이름을 가진 사용자 검색
+      const matchedUser = allUsers.find(
+        (user) => user.name && user.name.trim() === supplierName
+      );
+
+      // fallback: 없으면 기본 값 사용
+      const requester = matchedUser
+        ? { name: matchedUser.name, email: matchedUser.email }
+        : { name: '이자영', email: 'jenny@floc.kr' };
+
+      // 이 값을 티켓 생성에 사용
       const zendeskPayload = {
         ticket: {
           subject: `[${eventText}] 신규 티켓! 접수 내용 확인 필요`,
           comment: { body: itemMessage },
-          requester: {
-            name: '이자영',
-            email: 'jenny@floc.kr',
-          },
+          requester: requester,
           custom_fields: [
             { id: 9316369427087, value: requesterName }, // 주문자명
             { id: 9315295471247, value: '높음' }, // 우선순위
@@ -237,4 +251,38 @@ async function retry(fn, retries = 3, delay = 1000) {
     }
   }
   throw lastErr;
+}
+
+async function fetchAllUsers({ zendeskDomain, zendeskEmail, zendeskToken }) {
+  let url = `https://${zendeskDomain}/api/v2/users.json?role=end-user`;
+  const users = [];
+
+  try {
+    while (url) {
+      const response = await axios.get(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization:
+            'Basic ' +
+            Buffer.from(`${zendeskEmail}/token:${zendeskToken}`).toString(
+              'base64'
+            ),
+        },
+      });
+
+      users.push(...response.data.users); // 전개 연산자로 개별 추가
+      console.log(`Fetched ${response.data.users.length} users from ${url}`);
+
+      url = response.data.next_page || null;
+    }
+
+    console.log(`✅ Total users fetched: ${users.length}`);
+    return users;
+  } catch (error) {
+    console.error(
+      '❌ Error fetching users:',
+      error.response?.data || error.message
+    );
+    return [];
+  }
 }
