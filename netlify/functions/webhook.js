@@ -1,7 +1,13 @@
 const axios = require('axios'); // axios로 HTTP 요청 보낼 거야.
 const crypto = require('crypto');
 const { getCache, setCache } = require('./utils/cacheUtil');
-const supplierMap = require('./supplier_name.json');
+// 🔽 supplierMap을 객체로 변환
+const supplierArray = require('./supplier_name.json');
+const supplierMap = supplierArray.reduce((acc, obj) => {
+  const [key, value] = Object.entries(obj)[0];
+  acc[key] = value;
+  return acc;
+}, {});
 
 exports.handler = async (event, context) => {
   try {
