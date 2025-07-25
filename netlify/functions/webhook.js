@@ -48,24 +48,18 @@ exports.handler = async (event, context) => {
 
     // 보낼 메시지 구성
     if (
-      body.resource.event_code !== 'return_order_process' &&
-      !body.resource.event_code.includes('exchange_order_request')
+      body.resource.event_code == 'return_order_process' ||
+      body.resource.event_code == 'exchange_order_request'
     ) {
-      return {
-        statusCode: 400,
-        body: 'Unhandled event type',
-      };
-    }
+      const eventText =
+        body.resource.event_code === 'return_order_process' ? '반품' : '교환';
+      const registCate =
+        body.resource.event_code === 'return_order_process'
+          ? '반품_변심'
+          : '교환_불량';
 
-    const eventText =
-      body.resource.event_code === 'return_order_process' ? '반품' : '교환';
-    const registCate =
-      body.resource.event_code === 'return_order_process'
-        ? '반품_변심'
-        : '교환_불량';
-
-    const slackMessage = {
-      text: `*${eventText}이 신청 되었어요!*
+      const slackMessage = {
+        text: `*${eventText}이 신청 되었어요!*
   
   *요청날짜*: ${formattedDate}  
   *주문일자*: ${payDate}  
@@ -84,41 +78,41 @@ exports.handler = async (event, context) => {
   *주문서URL*: ${orderUrl}
   *raw_data* : ${JSON.stringify(body)}
   `,
-      mrkdwn: true,
-    };
+        mrkdwn: true,
+      };
 
-    await axios.post(slackWebhookUrl, slackMessage);
-    // fetchAllUsers 호출 (최초 한 번만 불러오도록 바깥에서 호출한 뒤 users 배열로 전달하는 게 이상적입니다)
-    const allUsers = await fetchAllUsers({
-      zendeskDomain,
-      zendeskEmail,
-      zendeskToken,
-    });
-
-    const productNames = (productName || '')
-      .split(',')
-      .map((name) => name.trim());
-
-    let index = 0;
-
-    for (const info of body.resource.extra_info) {
-      const isDuplicate = await isTicketAlreadyExists({
+      await axios.post(slackWebhookUrl, slackMessage);
+      // fetchAllUsers 호출 (최초 한 번만 불러오도록 바깥에서 호출한 뒤 users 배열로 전달하는 게 이상적입니다)
+      const allUsers = await fetchAllUsers({
         zendeskDomain,
         zendeskEmail,
         zendeskToken,
-        ordItemCode: info.ord_item_code,
       });
-      if (isDuplicate) {
-        console.log(`❗ 중복 티켓 존재 - 생성 건너뜀: ${info.ord_item_code}`);
-        continue;
-      }
 
-      const productNameForItem = productNames[index++] || '누락';
+      const productNames = (productName || '')
+        .split(',')
+        .map((name) => name.trim());
 
-      const supplierName =
-        supplierMap[info.supplier_code] || info.supplier_code;
+      let index = 0;
 
-      const itemMessage = `*${eventText} 요청 - 단품 기준 티켓*
+      for (const info of body.resource.extra_info) {
+        const isDuplicate = await isTicketAlreadyExists({
+          zendeskDomain,
+          zendeskEmail,
+          zendeskToken,
+          ordItemCode: info.ord_item_code,
+        });
+        if (isDuplicate) {
+          console.log(`❗ 중복 티켓 존재 - 생성 건너뜀: ${info.ord_item_code}`);
+          continue;
+        }
+
+        const productNameForItem = productNames[index++] || '누락';
+
+        const supplierName =
+          supplierMap[info.supplier_code] || info.supplier_code;
+
+        const itemMessage = `*${eventText} 요청 - 단품 기준 티켓*
   
   *주문일자*: ${payDate}
   *주문자명*: ${requesterName}
@@ -130,66 +124,67 @@ exports.handler = async (event, context) => {
   *주문서URL*: ${orderUrl}
   `;
 
-      // 공급사명과 같은 이름을 가진 사용자 검색
-      const matchedUser = allUsers.find(
-        (user) => user.name && user.name.trim() === supplierName
-      );
-
-      // fallback: 없으면 기본 값 사용
-      const requester = matchedUser
-        ? { name: matchedUser.name, email: matchedUser.email }
-        : { name: '이자영', email: 'jenny@floc.kr' };
-
-      // 이 값을 티켓 생성에 사용
-      const zendeskPayload = {
-        ticket: {
-          subject: `[${eventText}] 신규 티켓! 접수 내용 확인 필요`,
-          comment: { body: itemMessage },
-          requester: requester,
-          custom_fields: [
-            { id: 9316369427087, value: requesterName }, // 주문자명
-            { id: 9315295471247, value: '높음' }, // 우선순위
-            { id: 9316413678223, value: formattedDate }, // 요청날짜
-            { id: 9316416018063, value: orderUrl }, // 주문서 URL
-            { id: 9316388042767, value: `${info.ord_item_code}` }, // 품목
-            { id: 9316414895503, value: requesterCellphone },
-            { id: 9316400270479, value: registCate }, // 반품/교환 유형
-            { id: 9316386931215, value: productNameForItem }, // 상품명
-          ],
-        },
-      };
-
-      try {
-        await retry(() =>
-          axios.post(
-            `https://${zendeskDomain}/api/v2/tickets.json`,
-            zendeskPayload,
-            {
-              headers: {
-                Authorization:
-                  'Basic ' +
-                  Buffer.from(`${zendeskEmail}/token:${zendeskToken}`).toString(
-                    'base64'
-                  ),
-                'Content-Type': 'application/json',
-              },
-            }
-          )
+        // 공급사명과 같은 이름을 가진 사용자 검색
+        const matchedUser = allUsers.find(
+          (user) => user.name && user.name.trim() === supplierName
         );
-      } catch (err) {
-        console.error(
-          `❌ Zendesk 생성 실패 (${info.ord_item_code}):`,
-          err.message
-        );
+
+        // fallback: 없으면 기본 값 사용
+        const requester = matchedUser
+          ? { name: matchedUser.name, email: matchedUser.email }
+          : { name: '이자영', email: 'jenny@floc.kr' };
+
+        // 이 값을 티켓 생성에 사용
+        const zendeskPayload = {
+          ticket: {
+            subject: `[${eventText}] 신규 티켓! 접수 내용 확인 필요`,
+            comment: { body: itemMessage },
+            requester: requester,
+            custom_fields: [
+              { id: 9316369427087, value: requesterName }, // 주문자명
+              { id: 9315295471247, value: '높음' }, // 우선순위
+              { id: 9316413678223, value: formattedDate }, // 요청날짜
+              { id: 9316416018063, value: orderUrl }, // 주문서 URL
+              { id: 9316388042767, value: `${info.ord_item_code}` }, // 품목
+              { id: 9316414895503, value: requesterCellphone },
+              { id: 9316400270479, value: registCate }, // 반품/교환 유형
+              { id: 9316386931215, value: productNameForItem }, // 상품명
+            ],
+          },
+        };
+
+        try {
+          await retry(() =>
+            axios.post(
+              `https://${zendeskDomain}/api/v2/tickets.json`,
+              zendeskPayload,
+              {
+                headers: {
+                  Authorization:
+                    'Basic ' +
+                    Buffer.from(
+                      `${zendeskEmail}/token:${zendeskToken}`
+                    ).toString('base64'),
+                  'Content-Type': 'application/json',
+                },
+              }
+            )
+          );
+        } catch (err) {
+          console.error(
+            `❌ Zendesk 생성 실패 (${info.ord_item_code}):`,
+            err.message
+          );
+        }
       }
-    }
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        message: 'Slack 메시지 전송 및 Zendesk 다건 처리 완료',
-      }),
-    };
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          message: 'Slack 메시지 전송 및 Zendesk 다건 처리 완료',
+        }),
+      };
+    }
 
     // try {
     //   // Slack에 메시지 전송
