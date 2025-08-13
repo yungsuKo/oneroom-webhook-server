@@ -10,6 +10,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@netlify/blobs": "^10.0.8",
     "axios": "^1.10.0",
     "crypto": "^1.0.1",
     "dotenv": "^16.5.0"
