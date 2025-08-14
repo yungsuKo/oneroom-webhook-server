@@ -1,3 +1,4 @@
 [build]
   functions = "netlify/functions"
   command = "npm install"
+  external_node_modules = ["@netlify/blobs", "@netlify/runtime-utils"]
