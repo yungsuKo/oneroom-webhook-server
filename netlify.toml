@@ -1,13 +1,9 @@
 [build]
   # 일반적으로 build 단계에서는 의존성 설치 + 앱 빌드 스크립트를 실행합니다.
   # 단순 함수만 쓰면 command 없이도 됩니다. (원하면 npm ci 권장)
-  command = "npm ci"
+  functions = "netlify/functions"
+  command = "npm install"
 
 # ← 중요: Functions 설정은 [functions] 섹션에 둡니다.
 [functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"
-  node_version = "18"
   external_node_modules = ["@netlify/blobs", "@netlify/runtime-utils"]
-  # 함수 번들에 포함이 필요한 정적 파일이 있으면 지정 (예: supplier_name.json)
-  included_files = ["netlify/functions/supplier_name.json"]
