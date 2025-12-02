@@ -11,7 +11,7 @@
   "description": "",
   "dependencies": {
     "@netlify/blobs": "^6.0.0",
-    "@netlify/runtime-utils": "^6.0.0",
+    "@netlify/runtime-utils": "^5.0.0",
     "axios": "^1.10.0",
     "crypto": "^1.0.1",
     "dotenv": "^16.5.0"
